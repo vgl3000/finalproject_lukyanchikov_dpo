@@ -58,3 +58,12 @@ class User:
         ).hexdigest()
 
         return password_hash == self._hashed_password
+
+    def change_password(self, new_password):
+        if len(new_password) < 4:
+            raise ValueError("Пароль слишком короткий")
+
+        self._salt = secrets.token_hex(8)
+        self._hashed_password = hashlib.sha256(
+            (new_password + self._salt).encode("utf-8")
+        ).hexdigest()
