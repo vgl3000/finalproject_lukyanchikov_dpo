@@ -11,6 +11,12 @@ class Wallet:
         self._balance += amount
 
     def withdraw(self, amount):
+        if amount <= 0:
+            raise ValueError("Неверная сумма")
+
+        if amount > self._balance:
+            raise ValueError("Недостаточно денег")
+
         self._balance -= amount
 
     def get_balance_info(self):
