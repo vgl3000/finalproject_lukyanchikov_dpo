@@ -7,29 +7,39 @@ from datetime import datetime
 class Wallet:
     def __init__(self, currency_code):
         self.currency_code = currency_code
-        self._balance = 0.0
+        self.balance = 0.0
 
     def deposit(self, amount):
         if amount <= 0:
             raise ValueError("Неверная сумма")
 
-        self._balance += amount
+        self.balance += amount
 
     def withdraw(self, amount):
         if amount <= 0:
             raise ValueError("Неверная сумма")
 
-        if amount > self._balance:
+        if amount > self.balance:
             raise ValueError("Недостаточно денег")
 
-        self._balance -= amount
+        self.balance -= amount
 
     def get_balance_info(self):
-        return f"{self.currency_code}: {self._balance}"
+        return f"{self.currency_code}: {self.balance}"
 
     @property
     def balance(self):
         return self._balance
+
+    @balance.setter
+    def balance(self, value):
+        if type(value) not in (int, float):
+            raise ValueError("Баланс должен быть числом")
+
+        if value < 0:
+            raise ValueError("Баланс не может быть отрицательным")
+
+        self._balance = value
 
 
 class User:
