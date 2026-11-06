@@ -1,12 +1,13 @@
 
 class Wallet:
-    """Кошелёк для хранения одной валюты."""
-
-    def __init__(self, currency_code: str):
+    def __init__(self, currency_code):
         self.currency_code = currency_code
         self._balance = 0.0
 
-    def deposit(self, amount: float):
+    def deposit(self, amount):
+        if amount <= 0:
+            raise ValueError("Неверная сумма")
+
         self._balance += amount
 
     def get_balance_info(self):
