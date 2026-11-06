@@ -56,3 +56,13 @@ def login(username, password):
             return f"Вы вошли как '{username}'"
 
     raise ValueError("Пользователь не найден")
+
+
+def get_portfolio(user_id):
+    portfolios = load_portfolios()
+
+    for portfolio in portfolios:
+        if portfolio["user_id"] == user_id:
+            return portfolio
+
+    raise ValueError("Портфель не найден")
