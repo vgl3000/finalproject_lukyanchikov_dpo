@@ -88,6 +88,15 @@ class User:
             (new_password + self._salt).encode("utf-8")
         ).hexdigest()
 
+    def to_dict(self):
+        return {
+            "user_id": self._user_id,
+            "username": self._username,
+            "hashed_password": self._hashed_password,
+            "salt": self._salt,
+            "registration_date": self._registration_date.isoformat(),
+        }
+
 
 class Portfolio:
     def __init__(self, user):
