@@ -82,3 +82,11 @@ class Portfolio:
 
     def get_wallet(self, currency_code):
         return self._wallets.get(currency_code)
+
+    @property
+    def user(self):
+        return self._user
+
+    @property
+    def wallets(self):
+        return self._wallets.copy()
