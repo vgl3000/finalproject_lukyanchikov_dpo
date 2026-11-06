@@ -10,5 +10,8 @@ class Wallet:
 
         self._balance += amount
 
+    def withdraw(self, amount):
+        self._balance -= amount
+
     def get_balance_info(self):
         return f"{self.currency_code}: {self._balance}"
