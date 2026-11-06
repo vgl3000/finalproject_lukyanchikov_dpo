@@ -27,6 +27,10 @@ class Wallet:
     def get_balance_info(self):
         return f"{self.currency_code}: {self._balance}"
 
+    @property
+    def balance(self):
+        return self._balance
+
 
 class User:
     def __init__(self, user_id, username, password):
@@ -90,3 +94,23 @@ class Portfolio:
     @property
     def wallets(self):
         return self._wallets.copy()
+
+    def get_total_value(self, base_currency="USD"):
+        exchange_rates = {
+            "USD": 1.0,
+            "EUR": 1.1,
+            "BTC": 60000.0,
+        }
+
+        if base_currency not in exchange_rates:
+            raise ValueError("Неизвестная валюта")
+
+        total_usd = 0.0
+
+        for code, wallet in self._wallets.items():
+            if code not in exchange_rates:
+                raise ValueError("Неизвестная валюта")
+
+            total_usd += wallet.balance * exchange_rates[code]
+
+        return total_usd / exchange_rates[base_currency]
