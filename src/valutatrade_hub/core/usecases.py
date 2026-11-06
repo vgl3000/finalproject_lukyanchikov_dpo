@@ -2,11 +2,17 @@
 import hashlib
 
 from valutatrade_hub.core.models import User
-from valutatrade_hub.infra.storage import load_users, save_users
+from valutatrade_hub.infra.storage import (
+    load_portfolios,
+    load_users,
+    save_portfolios,
+    save_users,
+)
 
 
 def register(username, password):
     users = load_users()
+    portfolios = load_portfolios()
 
     for user in users:
         if user["username"] == username:
@@ -21,7 +27,16 @@ def register(username, password):
     new_user = User(new_id, username, password)
 
     users.append(new_user.to_dict())
+
+    new_portfolio = {
+        "user_id": new_id,
+        "wallets": {}
+    }
+
+    portfolios.append(new_portfolio)
+
     save_users(users)
+    save_portfolios(portfolios)
 
     return f"Пользователь {username} зарегистрирован"
 
