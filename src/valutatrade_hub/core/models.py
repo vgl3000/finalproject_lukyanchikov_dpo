@@ -10,12 +10,18 @@ class Wallet:
         self.balance = 0.0
 
     def deposit(self, amount):
+        if type(amount) not in (int, float):
+            raise ValueError("Сумма должна быть числом")
+
         if amount <= 0:
             raise ValueError("Неверная сумма")
 
         self.balance += amount
 
     def withdraw(self, amount):
+        if type(amount) not in (int, float):
+            raise ValueError("Сумма должна быть числом")
+
         if amount <= 0:
             raise ValueError("Неверная сумма")
 
