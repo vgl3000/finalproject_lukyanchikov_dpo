@@ -1,7 +1,7 @@
 
 import hashlib
 
-from valutatrade_hub.core.models import User
+from valutatrade_hub.core.models import User, Wallet
 from valutatrade_hub.infra.storage import (
     load_portfolios,
     load_users,
@@ -64,5 +64,30 @@ def get_portfolio(user_id):
     for portfolio in portfolios:
         if portfolio["user_id"] == user_id:
             return portfolio
+
+    raise ValueError("Портфель не найден")
+
+
+def add_currency(user_id, currency_code):
+    if not isinstance(currency_code, str) or not currency_code.strip():
+        raise ValueError("Неверный код валюты")
+
+    currency_code = currency_code.strip().upper()
+    portfolios = load_portfolios()
+
+    for portfolio in portfolios:
+        if portfolio["user_id"] == user_id:
+            if currency_code in portfolio["wallets"]:
+                raise ValueError("Такой кошелёк уже есть")
+
+            wallet = Wallet(currency_code)
+
+            portfolio["wallets"][currency_code] = {
+                "currency_code": wallet.currency_code,
+                "balance": wallet.balance,
+            }
+
+            save_portfolios(portfolios)
+            return f"Кошелёк {currency_code} добавлен"
 
     raise ValueError("Портфель не найден")
