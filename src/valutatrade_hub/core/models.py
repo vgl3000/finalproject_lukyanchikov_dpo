@@ -67,3 +67,18 @@ class User:
         self._hashed_password = hashlib.sha256(
             (new_password + self._salt).encode("utf-8")
         ).hexdigest()
+
+
+class Portfolio:
+    def __init__(self, user):
+        self._user = user
+        self._wallets = {}
+
+    def add_currency(self, currency_code):
+        if currency_code in self._wallets:
+            raise ValueError("Такой кошелёк уже есть")
+
+        self._wallets[currency_code] = Wallet(currency_code)
+
+    def get_wallet(self, currency_code):
+        return self._wallets.get(currency_code)
