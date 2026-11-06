@@ -2,7 +2,6 @@
 import json
 from pathlib import Path
 
-
 USERS_FILE = Path("data/users.json")
 
 
