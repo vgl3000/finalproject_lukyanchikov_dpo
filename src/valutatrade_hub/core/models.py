@@ -51,3 +51,10 @@ class User:
             "username": self._username,
             "registration_date": self._registration_date.isoformat(),
         }
+
+    def verify_password(self, password):
+        password_hash = hashlib.sha256(
+            (password + self._salt).encode("utf-8")
+        ).hexdigest()
+
+        return password_hash == self._hashed_password
