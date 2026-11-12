@@ -25,7 +25,6 @@ def register(username, password):
             new_id = user["user_id"] + 1
 
     new_user = User(new_id, username, password)
-
     users.append(new_user.to_dict())
 
     new_portfolio = {
@@ -89,5 +88,31 @@ def add_currency(user_id, currency_code):
 
             save_portfolios(portfolios)
             return f"Кошелёк {currency_code} добавлен"
+
+    raise ValueError("Портфель не найден")
+
+
+def deposit_wallet(user_id, currency_code, amount):
+    if not isinstance(currency_code, str) or not currency_code.strip():
+        raise ValueError("Неверный код валюты")
+
+    currency_code = currency_code.strip().upper()
+    portfolios = load_portfolios()
+
+    for portfolio in portfolios:
+        if portfolio["user_id"] == user_id:
+            if currency_code not in portfolio["wallets"]:
+                raise ValueError("Кошелёк не найден")
+
+            wallet_data = portfolio["wallets"][currency_code]
+
+            wallet = Wallet(currency_code)
+            wallet.balance = wallet_data["balance"]
+            wallet.deposit(amount)
+
+            wallet_data["balance"] = wallet.balance
+            save_portfolios(portfolios)
+
+            return f"Баланс {currency_code}: {wallet.balance}"
 
     raise ValueError("Портфель не найден")
