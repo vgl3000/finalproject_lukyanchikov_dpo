@@ -1,20 +1,16 @@
 
 import hashlib
 import math
+from datetime import UTC, datetime
 
 from valutatrade_hub.core.models import User, Wallet
 from valutatrade_hub.infra.storage import (
     load_portfolios,
+    load_rates,
     load_users,
     save_portfolios,
     save_users,
 )
-
-EXCHANGE_RATES = {
-    "USD": 1.0,
-    "EUR": 1.1,
-    "BTC": 60000.0,
-}
 
 
 def register(username, password):
@@ -161,6 +157,45 @@ def withdraw_wallet(user_id, currency_code, amount):
     raise ValueError("Портфель не найден")
 
 
+def get_usd_rate(currency_code):
+    if currency_code == "USD":
+        return 1.0
+
+    data = load_rates()
+    pairs = data.get("pairs", {})
+    pair = pairs.get(f"{currency_code}_USD")
+
+    if pair is None:
+        raise ValueError(
+            f"Нет курса для {currency_code}. Выполните update-rates"
+        )
+
+    try:
+        rate = pair["rate"]
+        updated_at = datetime.fromisoformat(pair["updated_at"])
+
+    except (KeyError, TypeError, ValueError) as error:
+        raise ValueError("Ошибка данных курса") from error
+
+    if updated_at.tzinfo is None:
+        raise ValueError("Ошибка времени обновления курса")
+
+    age = datetime.now(UTC) - updated_at
+
+    if age.total_seconds() > 300:
+        raise ValueError(
+            f"Курс {currency_code} устарел. Выполните update-rates"
+        )
+
+    if type(rate) not in (int, float):
+        raise ValueError("Неверное значение курса")
+
+    if not math.isfinite(rate) or rate <= 0:
+        raise ValueError("Неверное значение курса")
+
+    return rate
+
+
 def get_rate(from_code, to_code):
     if not isinstance(from_code, str) or not from_code.strip():
         raise ValueError("Неверный код валюты")
@@ -171,34 +206,25 @@ def get_rate(from_code, to_code):
     from_code = from_code.strip().upper()
     to_code = to_code.strip().upper()
 
-    if from_code not in EXCHANGE_RATES:
-        raise ValueError(f"Неизвестная валюта: {from_code}")
+    from_rate = get_usd_rate(from_code)
+    to_rate = get_usd_rate(to_code)
 
-    if to_code not in EXCHANGE_RATES:
-        raise ValueError(f"Неизвестная валюта: {to_code}")
-
-    rate = EXCHANGE_RATES[from_code] / EXCHANGE_RATES[to_code]
-
-    return rate
+    return from_rate / to_rate
 
 
 def get_portfolio_total(username, base_currency="USD"):
     portfolio = get_user_portfolio(username)
 
-    base_currency = base_currency.upper()
-
-    if base_currency not in EXCHANGE_RATES:
-        raise ValueError("Неизвестная базовая валюта")
-
+    base_currency = base_currency.strip().upper()
     total_usd = 0.0
 
     for code, wallet in portfolio["wallets"].items():
-        if code not in EXCHANGE_RATES:
-            raise ValueError(f"Нет курса для {code}")
+        rate = get_usd_rate(code)
+        total_usd += wallet["balance"] * rate
 
-        total_usd += wallet["balance"] * EXCHANGE_RATES[code]
+    base_rate = get_usd_rate(base_currency)
 
-    return total_usd / EXCHANGE_RATES[base_currency]
+    return total_usd / base_rate
 
 
 def buy(username, currency_code, amount):

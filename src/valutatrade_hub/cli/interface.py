@@ -90,7 +90,7 @@ def run():
             rate = get_rate(from_code, to_code)
             reverse_rate = get_rate(to_code, from_code)
 
-            print("Учебные курсы (не актуальные рыночные данные)")
+            print("Курсы из локального кеша:")
             print(f"Курс {from_code} -> {to_code}: {rate:.8f}")
             print(f"Обратный курс {to_code} -> {from_code}: {reverse_rate:.8f}")
 
