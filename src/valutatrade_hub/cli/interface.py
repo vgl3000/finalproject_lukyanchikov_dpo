@@ -3,6 +3,7 @@ import argparse
 
 from valutatrade_hub.core.usecases import (
     get_portfolio_total,
+    get_rate,
     get_user_portfolio,
     login,
     register,
@@ -27,6 +28,10 @@ def run():
 
     portfolio_command = commands.add_parser("show-portfolio")
     portfolio_command.add_argument("--base", default="USD")
+
+    rate_command = commands.add_parser("get-rate")
+    rate_command.add_argument("--from", dest="from_currency", required=True)
+    rate_command.add_argument("--to", required=True)
 
     args = parser.parse_args()
 
@@ -59,6 +64,17 @@ def run():
                     print(f"{code}: {wallet['balance']}")
 
             print(f"ИТОГО: {total:.2f} {base_currency}")
+
+        elif args.command == "get-rate":
+            from_code = args.from_currency.strip().upper()
+            to_code = args.to.strip().upper()
+
+            rate = get_rate(from_code, to_code)
+            reverse_rate = get_rate(to_code, from_code)
+
+            print("Учебные курсы (не актуальные рыночные данные)")
+            print(f"Курс {from_code} -> {to_code}: {rate:.8f}")
+            print(f"Обратный курс {to_code} -> {from_code}: {reverse_rate:.8f}")
 
         else:
             parser.print_help()
