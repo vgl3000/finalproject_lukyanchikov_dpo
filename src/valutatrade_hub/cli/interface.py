@@ -1,8 +1,12 @@
 
 import argparse
 
-from valutatrade_hub.core.usecases import login, register
-from valutatrade_hub.infra.session import save_session
+from valutatrade_hub.core.usecases import (
+    get_user_portfolio,
+    login,
+    register,
+)
+from valutatrade_hub.infra.session import load_session, save_session
 
 
 def run():
@@ -20,6 +24,8 @@ def run():
     login_command.add_argument("--username", required=True)
     login_command.add_argument("--password", required=True)
 
+    commands.add_parser("show-portfolio")
+
     args = parser.parse_args()
 
     try:
@@ -31,6 +37,22 @@ def run():
             result = login(args.username, args.password)
             save_session(args.username)
             print(result)
+
+        elif args.command == "show-portfolio":
+            username = load_session()
+
+            if username is None:
+                raise ValueError("Сначала выполните login")
+
+            portfolio = get_user_portfolio(username)
+
+            print(f"Портфель пользователя '{username}':")
+
+            if not portfolio["wallets"]:
+                print("Кошельков пока нет")
+            else:
+                for code, wallet in portfolio["wallets"].items():
+                    print(f"{code}: {wallet['balance']}")
 
         else:
             parser.print_help()

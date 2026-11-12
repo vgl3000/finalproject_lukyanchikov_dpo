@@ -67,6 +67,16 @@ def get_portfolio(user_id):
     raise ValueError("Портфель не найден")
 
 
+def get_user_portfolio(username):
+    users = load_users()
+
+    for user in users:
+        if user["username"] == username:
+            return get_portfolio(user["user_id"])
+
+    raise ValueError("Пользователь не найден")
+
+
 def add_currency(user_id, currency_code):
     if not isinstance(currency_code, str) or not currency_code.strip():
         raise ValueError("Неверный код валюты")
