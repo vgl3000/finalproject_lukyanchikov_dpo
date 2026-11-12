@@ -94,7 +94,11 @@ class ExchangeRateApiClient(BaseApiClient):
         if data.get("result") != "success":
             raise ApiRequestError("Ошибка ответа ExchangeRate-API")
 
-        conversion_rates = data.get("conversion_rates", {})
+        conversion_rates = data.get("conversion_rates")
+
+        if conversion_rates is None:
+            conversion_rates = data.get("rates", {})
+
         rates = {}
 
         for code in config.FIAT_CODES:

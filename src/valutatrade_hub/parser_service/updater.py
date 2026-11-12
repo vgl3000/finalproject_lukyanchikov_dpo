@@ -1,5 +1,5 @@
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from valutatrade_hub.infra.storage import load_rates, save_rates
 from valutatrade_hub.parser_service.api_clients import (
@@ -19,7 +19,7 @@ class RatesUpdater:
     def run_update(self):
         data = load_rates()
         pairs = data.get("pairs", {})
-        updated_at = datetime.now(timezone.utc).isoformat()
+        updated_at = datetime.now(UTC).isoformat()
         count = 0
 
         for client in self.clients:
