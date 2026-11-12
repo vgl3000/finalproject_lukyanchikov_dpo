@@ -1,5 +1,6 @@
 
 import hashlib
+import math
 
 from valutatrade_hub.core.models import User, Wallet
 from valutatrade_hub.infra.storage import (
@@ -206,21 +207,53 @@ def buy(username, currency_code, amount):
 
     currency_code = currency_code.strip().upper()
 
-    if currency_code not in EXCHANGE_RATES:
-        raise ValueError("Неизвестная валюта")
+    if currency_code == "USD":
+        raise ValueError("Нельзя купить USD за USD")
 
-    if type(amount) not in (int, float) or amount <= 0:
+    if type(amount) not in (int, float) or not math.isfinite(amount):
         raise ValueError("Неверная сумма")
 
-    portfolio = get_user_portfolio(username)
-    user_id = portfolio["user_id"]
+    if amount <= 0:
+        raise ValueError("Неверная сумма")
 
-    if currency_code not in portfolio["wallets"]:
-        add_currency(user_id, currency_code)
+    rate = get_rate(currency_code, "USD")
+    cost = amount * rate
 
-    result = deposit_wallet(user_id, currency_code, amount)
+    if not math.isfinite(cost):
+        raise ValueError("Неверная сумма")
 
-    return f"Покупка выполнена. {result}"
+    user_id = get_user_portfolio(username)["user_id"]
+    portfolios = load_portfolios()
+
+    for portfolio in portfolios:
+        if portfolio["user_id"] == user_id:
+            wallets = portfolio["wallets"]
+
+            if "USD" not in wallets:
+                raise ValueError("Сначала пополните USD-кошелёк")
+
+            usd_wallet = Wallet("USD")
+            usd_wallet.balance = wallets["USD"]["balance"]
+            usd_wallet.withdraw(cost)
+
+            currency_wallet = Wallet(currency_code)
+
+            if currency_code in wallets:
+                currency_wallet.balance = wallets[currency_code]["balance"]
+
+            currency_wallet.deposit(amount)
+
+            wallets["USD"]["balance"] = usd_wallet.balance
+            wallets[currency_code] = {
+                "currency_code": currency_code,
+                "balance": currency_wallet.balance,
+            }
+
+            save_portfolios(portfolios)
+
+            return f"Куплено {amount} {currency_code} за {cost:.2f} USD"
+
+    raise ValueError("Портфель не найден")
 
 
 def sell(username, currency_code, amount):
@@ -229,18 +262,50 @@ def sell(username, currency_code, amount):
 
     currency_code = currency_code.strip().upper()
 
-    if currency_code not in EXCHANGE_RATES:
-        raise ValueError("Неизвестная валюта")
+    if currency_code == "USD":
+        raise ValueError("Нельзя продать USD за USD")
 
-    if type(amount) not in (int, float) or amount <= 0:
+    if type(amount) not in (int, float) or not math.isfinite(amount):
         raise ValueError("Неверная сумма")
 
-    portfolio = get_user_portfolio(username)
+    if amount <= 0:
+        raise ValueError("Неверная сумма")
 
-    if currency_code not in portfolio["wallets"]:
-        raise ValueError("Кошелёк не найден")
+    rate = get_rate(currency_code, "USD")
+    income = amount * rate
 
-    user_id = portfolio["user_id"]
-    result = withdraw_wallet(user_id, currency_code, amount)
+    if not math.isfinite(income):
+        raise ValueError("Неверная сумма")
 
-    return f"Продажа выполнена. {result}"
+    user_id = get_user_portfolio(username)["user_id"]
+    portfolios = load_portfolios()
+
+    for portfolio in portfolios:
+        if portfolio["user_id"] == user_id:
+            wallets = portfolio["wallets"]
+
+            if currency_code not in wallets:
+                raise ValueError("Кошелёк не найден")
+
+            currency_wallet = Wallet(currency_code)
+            currency_wallet.balance = wallets[currency_code]["balance"]
+            currency_wallet.withdraw(amount)
+
+            usd_wallet = Wallet("USD")
+
+            if "USD" in wallets:
+                usd_wallet.balance = wallets["USD"]["balance"]
+
+            usd_wallet.deposit(income)
+
+            wallets[currency_code]["balance"] = currency_wallet.balance
+            wallets["USD"] = {
+                "currency_code": "USD",
+                "balance": usd_wallet.balance,
+            }
+
+            save_portfolios(portfolios)
+
+            return f"Продано {amount} {currency_code} за {income:.2f} USD"
+
+    raise ValueError("Портфель не найден")
