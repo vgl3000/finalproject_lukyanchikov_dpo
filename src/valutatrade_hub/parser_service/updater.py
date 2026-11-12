@@ -10,15 +10,23 @@ from valutatrade_hub.parser_service.api_clients import (
 
 
 class RatesUpdater:
-    def __init__(self):
-        self.clients = [
-            CoinGeckoClient(),
-            ExchangeRateApiClient(),
-        ]
+    def __init__(self, source=None):
+        if source == "coingecko":
+            self.clients = [CoinGeckoClient()]
+
+        elif source == "exchangerate":
+            self.clients = [ExchangeRateApiClient()]
+
+        else:
+            self.clients = [
+                CoinGeckoClient(),
+                ExchangeRateApiClient(),
+            ]
 
     def run_update(self):
         data = load_rates()
         pairs = data.get("pairs", {})
+
         updated_at = datetime.now(UTC).isoformat()
         count = 0
 
@@ -32,6 +40,7 @@ class RatesUpdater:
                         "updated_at": updated_at,
                         "source": client.__class__.__name__,
                     }
+
                     count += 1
 
                 print(f"{client.__class__.__name__}: OK")

@@ -11,6 +11,8 @@ from valutatrade_hub.core.usecases import (
     sell,
 )
 from valutatrade_hub.infra.session import load_session, save_session
+from valutatrade_hub.parser_service.api_clients import ApiRequestError
+from valutatrade_hub.parser_service.updater import RatesUpdater
 
 
 def run():
@@ -42,6 +44,12 @@ def run():
     sell_command = commands.add_parser("sell")
     sell_command.add_argument("--currency", required=True)
     sell_command.add_argument("--amount", type=float, required=True)
+
+    update_command = commands.add_parser("update-rates")
+    update_command.add_argument(
+        "--source",
+        choices=["coingecko", "exchangerate"],
+    )
 
     args = parser.parse_args()
 
@@ -104,8 +112,14 @@ def run():
             result = sell(username, args.currency, args.amount)
             print(result)
 
+        elif args.command == "update-rates":
+            updater = RatesUpdater(args.source)
+            count = updater.run_update()
+
+            print(f"Обновлено курсов: {count}")
+
         else:
             parser.print_help()
 
-    except ValueError as error:
+    except (ValueError, ApiRequestError) as error:
         print(f"Ошибка: {error}")
