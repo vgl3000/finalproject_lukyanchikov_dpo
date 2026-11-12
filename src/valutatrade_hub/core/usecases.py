@@ -152,3 +152,28 @@ def withdraw_wallet(user_id, currency_code, amount):
             return f"Баланс {currency_code}: {wallet.balance}"
 
     raise ValueError("Портфель не найден")
+
+
+def get_portfolio_total(username, base_currency="USD"):
+    portfolio = get_user_portfolio(username)
+
+    exchange_rates = {
+        "USD": 1.0,
+        "EUR": 1.1,
+        "BTC": 60000.0,
+    }
+
+    base_currency = base_currency.upper()
+
+    if base_currency not in exchange_rates:
+        raise ValueError("Неизвестная базовая валюта")
+
+    total_usd = 0.0
+
+    for code, wallet in portfolio["wallets"].items():
+        if code not in exchange_rates:
+            raise ValueError(f"Нет курса для {code}")
+
+        total_usd += wallet["balance"] * exchange_rates[code]
+
+    return total_usd / exchange_rates[base_currency]

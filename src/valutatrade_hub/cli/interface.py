@@ -2,6 +2,7 @@
 import argparse
 
 from valutatrade_hub.core.usecases import (
+    get_portfolio_total,
     get_user_portfolio,
     login,
     register,
@@ -24,7 +25,8 @@ def run():
     login_command.add_argument("--username", required=True)
     login_command.add_argument("--password", required=True)
 
-    commands.add_parser("show-portfolio")
+    portfolio_command = commands.add_parser("show-portfolio")
+    portfolio_command.add_argument("--base", default="USD")
 
     args = parser.parse_args()
 
@@ -45,6 +47,8 @@ def run():
                 raise ValueError("Сначала выполните login")
 
             portfolio = get_user_portfolio(username)
+            total = get_portfolio_total(username, args.base)
+            base_currency = args.base.upper()
 
             print(f"Портфель пользователя '{username}':")
 
@@ -53,6 +57,8 @@ def run():
             else:
                 for code, wallet in portfolio["wallets"].items():
                     print(f"{code}: {wallet['balance']}")
+
+            print(f"ИТОГО: {total:.2f} {base_currency}")
 
         else:
             parser.print_help()
