@@ -1,6 +1,9 @@
 
 import argparse
 
+from prettytable import PrettyTable
+
+from valutatrade_hub.core.rates import get_cached_rates
 from valutatrade_hub.core.usecases import (
     buy,
     get_portfolio_total,
@@ -50,6 +53,11 @@ def run():
         "--source",
         choices=["coingecko", "exchangerate"],
     )
+
+    show_rates_command = commands.add_parser("show-rates")
+    show_rates_command.add_argument("--currency")
+    show_rates_command.add_argument("--top", type=int)
+    show_rates_command.add_argument("--base", default="USD")
 
     args = parser.parse_args()
 
@@ -115,8 +123,33 @@ def run():
         elif args.command == "update-rates":
             updater = RatesUpdater(args.source)
             count = updater.run_update()
-
             print(f"Обновлено курсов: {count}")
+
+        elif args.command == "show-rates":
+            rows, updated_at = get_cached_rates(
+                args.currency,
+                args.top,
+                args.base,
+            )
+
+            table = PrettyTable()
+            table.field_names = [
+                "Валюта",
+                f"Цена в {args.base.upper()}",
+                "Источник",
+                "Обновлено",
+            ]
+
+            for code, rate, source, date in rows:
+                table.add_row([
+                    code,
+                    f"{rate:.6f}",
+                    source,
+                    date,
+                ])
+
+            print(f"Последнее обновление кеша: {updated_at}")
+            print(table)
 
         else:
             parser.print_help()
