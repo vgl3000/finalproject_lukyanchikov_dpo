@@ -1,7 +1,7 @@
 
 import argparse
 
-from valutatrade_hub.core.usecases import register
+from valutatrade_hub.core.usecases import login, register
 
 
 def run():
@@ -15,13 +15,23 @@ def run():
     register_command.add_argument("--username", required=True)
     register_command.add_argument("--password", required=True)
 
+    login_command = commands.add_parser("login")
+    login_command.add_argument("--username", required=True)
+    login_command.add_argument("--password", required=True)
+
     args = parser.parse_args()
 
-    if args.command == "register":
-        try:
+    try:
+        if args.command == "register":
             result = register(args.username, args.password)
             print(result)
-        except ValueError as error:
-            print(f"Ошибка: {error}")
-    else:
-        parser.print_help()
+
+        elif args.command == "login":
+            result = login(args.username, args.password)
+            print(result)
+
+        else:
+            parser.print_help()
+
+    except ValueError as error:
+        print(f"Ошибка: {error}")
