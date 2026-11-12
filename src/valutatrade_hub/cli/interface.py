@@ -8,6 +8,7 @@ from valutatrade_hub.core.usecases import (
     get_user_portfolio,
     login,
     register,
+    sell,
 )
 from valutatrade_hub.infra.session import load_session, save_session
 
@@ -37,6 +38,10 @@ def run():
     buy_command = commands.add_parser("buy")
     buy_command.add_argument("--currency", required=True)
     buy_command.add_argument("--amount", type=float, required=True)
+
+    sell_command = commands.add_parser("sell")
+    sell_command.add_argument("--currency", required=True)
+    sell_command.add_argument("--amount", type=float, required=True)
 
     args = parser.parse_args()
 
@@ -88,6 +93,15 @@ def run():
                 raise ValueError("Сначала выполните login")
 
             result = buy(username, args.currency, args.amount)
+            print(result)
+
+        elif args.command == "sell":
+            username = load_session()
+
+            if username is None:
+                raise ValueError("Сначала выполните login")
+
+            result = sell(username, args.currency, args.amount)
             print(result)
 
         else:

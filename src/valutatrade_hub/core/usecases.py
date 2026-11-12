@@ -221,3 +221,26 @@ def buy(username, currency_code, amount):
     result = deposit_wallet(user_id, currency_code, amount)
 
     return f"Покупка выполнена. {result}"
+
+
+def sell(username, currency_code, amount):
+    if not isinstance(currency_code, str) or not currency_code.strip():
+        raise ValueError("Неверный код валюты")
+
+    currency_code = currency_code.strip().upper()
+
+    if currency_code not in EXCHANGE_RATES:
+        raise ValueError("Неизвестная валюта")
+
+    if type(amount) not in (int, float) or amount <= 0:
+        raise ValueError("Неверная сумма")
+
+    portfolio = get_user_portfolio(username)
+
+    if currency_code not in portfolio["wallets"]:
+        raise ValueError("Кошелёк не найден")
+
+    user_id = portfolio["user_id"]
+    result = withdraw_wallet(user_id, currency_code, amount)
+
+    return f"Продажа выполнена. {result}"
