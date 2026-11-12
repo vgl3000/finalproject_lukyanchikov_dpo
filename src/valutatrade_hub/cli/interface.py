@@ -2,6 +2,7 @@
 import argparse
 
 from valutatrade_hub.core.usecases import login, register
+from valutatrade_hub.infra.session import save_session
 
 
 def run():
@@ -28,6 +29,7 @@ def run():
 
         elif args.command == "login":
             result = login(args.username, args.password)
+            save_session(args.username)
             print(result)
 
         else:
