@@ -7,6 +7,7 @@ from valutatrade_hub.parser_service.api_clients import (
     CoinGeckoClient,
     ExchangeRateApiClient,
 )
+from valutatrade_hub.parser_service.storage import save_history
 
 
 class RatesUpdater:
@@ -28,19 +29,34 @@ class RatesUpdater:
         pairs = data.get("pairs", {})
 
         updated_at = datetime.now(UTC).isoformat()
+        new_records = []
         count = 0
 
         for client in self.clients:
             try:
                 rates = client.fetch_rates()
 
-                for code, rate in rates.items():
-                    pairs[code] = {
+                for pair_name, rate in rates.items():
+                    source = client.__class__.__name__
+
+                    pairs[pair_name] = {
                         "rate": rate,
                         "updated_at": updated_at,
-                        "source": client.__class__.__name__,
+                        "source": source,
                     }
 
+                    currency_code = pair_name.removesuffix("_USD")
+
+                    record = {
+                        "id": f"{pair_name}_{updated_at}",
+                        "from_currency": currency_code,
+                        "to_currency": "USD",
+                        "rate": rate,
+                        "timestamp": updated_at,
+                        "source": source,
+                    }
+
+                    new_records.append(record)
                     count += 1
 
                 print(f"{client.__class__.__name__}: OK")
@@ -55,5 +71,6 @@ class RatesUpdater:
         data["last_refresh"] = updated_at
 
         save_rates(data)
+        save_history(new_records)
 
         return count

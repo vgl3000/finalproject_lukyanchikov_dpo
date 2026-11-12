@@ -11,3 +11,4 @@ wheels/
 
 data/session.json
 data/rates.json
+data/exchange_rates.json

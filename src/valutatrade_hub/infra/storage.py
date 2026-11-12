@@ -48,5 +48,11 @@ def load_rates():
 
 
 def save_rates(rates):
-    with open(RATES_FILE, "w", encoding="utf-8") as file:
+    RATES_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    temp_file = RATES_FILE.with_suffix(".tmp")
+
+    with open(temp_file, "w", encoding="utf-8") as file:
         json.dump(rates, file, ensure_ascii=False, indent=4)
+
+    temp_file.replace(RATES_FILE)
