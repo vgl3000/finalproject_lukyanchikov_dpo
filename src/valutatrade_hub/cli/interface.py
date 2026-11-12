@@ -2,6 +2,7 @@
 import argparse
 
 from valutatrade_hub.core.usecases import (
+    buy,
     get_portfolio_total,
     get_rate,
     get_user_portfolio,
@@ -32,6 +33,10 @@ def run():
     rate_command = commands.add_parser("get-rate")
     rate_command.add_argument("--from", dest="from_currency", required=True)
     rate_command.add_argument("--to", required=True)
+
+    buy_command = commands.add_parser("buy")
+    buy_command.add_argument("--currency", required=True)
+    buy_command.add_argument("--amount", type=float, required=True)
 
     args = parser.parse_args()
 
@@ -75,6 +80,15 @@ def run():
             print("Учебные курсы (не актуальные рыночные данные)")
             print(f"Курс {from_code} -> {to_code}: {rate:.8f}")
             print(f"Обратный курс {to_code} -> {from_code}: {reverse_rate:.8f}")
+
+        elif args.command == "buy":
+            username = load_session()
+
+            if username is None:
+                raise ValueError("Сначала выполните login")
+
+            result = buy(username, args.currency, args.amount)
+            print(result)
 
         else:
             parser.print_help()

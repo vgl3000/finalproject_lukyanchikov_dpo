@@ -198,3 +198,26 @@ def get_portfolio_total(username, base_currency="USD"):
         total_usd += wallet["balance"] * EXCHANGE_RATES[code]
 
     return total_usd / EXCHANGE_RATES[base_currency]
+
+
+def buy(username, currency_code, amount):
+    if not isinstance(currency_code, str) or not currency_code.strip():
+        raise ValueError("Неверный код валюты")
+
+    currency_code = currency_code.strip().upper()
+
+    if currency_code not in EXCHANGE_RATES:
+        raise ValueError("Неизвестная валюта")
+
+    if type(amount) not in (int, float) or amount <= 0:
+        raise ValueError("Неверная сумма")
+
+    portfolio = get_user_portfolio(username)
+    user_id = portfolio["user_id"]
+
+    if currency_code not in portfolio["wallets"]:
+        add_currency(user_id, currency_code)
+
+    result = deposit_wallet(user_id, currency_code, amount)
+
+    return f"Покупка выполнена. {result}"
