@@ -1,4 +1,6 @@
-﻿def main() -> None:
-    print("=== ValutaTrade Hub ===")
-    print("Добро пожаловать в валютный кошелёк!")
-    print("Версия программы: 0.1")
+﻿
+from valutatrade_hub.cli.interface import run
+
+
+def main():
+    run()
