@@ -10,3 +10,4 @@ wheels/
 .venv
 
 data/session.json
+data/rates.json

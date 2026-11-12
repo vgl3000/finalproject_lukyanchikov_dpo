@@ -4,6 +4,7 @@ from pathlib import Path
 
 USERS_FILE = Path("data/users.json")
 PORTFOLIOS_FILE = Path("data/portfolios.json")
+RATES_FILE = Path("data/rates.json")
 
 
 def load_users():
@@ -34,3 +35,18 @@ def load_portfolios():
 def save_portfolios(portfolios):
     with open(PORTFOLIOS_FILE, "w", encoding="utf-8") as file:
         json.dump(portfolios, file, ensure_ascii=False, indent=4)
+
+
+def load_rates():
+    if not RATES_FILE.exists():
+        return {"pairs": {}, "last_refresh": None}
+
+    with open(RATES_FILE, "r", encoding="utf-8-sig") as file:
+        rates = json.load(file)
+
+    return rates
+
+
+def save_rates(rates):
+    with open(RATES_FILE, "w", encoding="utf-8") as file:
+        json.dump(rates, file, ensure_ascii=False, indent=4)
