@@ -1,9 +1,11 @@
 
+import logging
 from datetime import UTC, datetime
 
+from valutatrade_hub.core.exceptions import ApiRequestError
 from valutatrade_hub.infra.storage import load_rates, save_rates
+from valutatrade_hub.logging_config import setup_logging
 from valutatrade_hub.parser_service.api_clients import (
-    ApiRequestError,
     CoinGeckoClient,
     ExchangeRateApiClient,
 )
@@ -25,6 +27,9 @@ class RatesUpdater:
             ]
 
     def run_update(self):
+        setup_logging()
+        logger = logging.getLogger("valutatrade_hub.parser")
+
         data = load_rates()
         pairs = data.get("pairs", {})
 
@@ -32,13 +37,15 @@ class RatesUpdater:
         new_records = []
         count = 0
 
+        logger.info("action=update_rates status=START")
+
         for client in self.clients:
+            source = client.__class__.__name__
+
             try:
                 rates = client.fetch_rates()
 
                 for pair_name, rate in rates.items():
-                    source = client.__class__.__name__
-
                     pairs[pair_name] = {
                         "rate": rate,
                         "updated_at": updated_at,
@@ -59,12 +66,27 @@ class RatesUpdater:
                     new_records.append(record)
                     count += 1
 
-                print(f"{client.__class__.__name__}: OK")
+                logger.info(
+                    "source=%s status=OK count=%s",
+                    source,
+                    len(rates),
+                )
+
+                print(f"{source}: OK")
 
             except ApiRequestError as error:
+                logger.error(
+                    "source=%s status=ERROR error=%s",
+                    source,
+                    error,
+                )
+
                 print(f"Ошибка: {error}")
 
         if count == 0:
+            logger.error(
+                "action=update_rates status=ERROR count=0"
+            )
             raise ApiRequestError("Не удалось обновить курсы")
 
         data["pairs"] = pairs
@@ -72,5 +94,10 @@ class RatesUpdater:
 
         save_rates(data)
         save_history(new_records)
+
+        logger.info(
+            "action=update_rates status=OK total=%s",
+            count,
+        )
 
         return count
