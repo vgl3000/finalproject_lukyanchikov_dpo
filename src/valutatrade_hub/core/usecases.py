@@ -4,6 +4,7 @@ import math
 from datetime import UTC, datetime
 
 from valutatrade_hub.core.models import User, Wallet
+from valutatrade_hub.decorators import log_action
 from valutatrade_hub.infra.storage import (
     load_portfolios,
     load_rates,
@@ -227,6 +228,7 @@ def get_portfolio_total(username, base_currency="USD"):
     return total_usd / base_rate
 
 
+@log_action
 def buy(username, currency_code, amount):
     if not isinstance(currency_code, str) or not currency_code.strip():
         raise ValueError("Неверный код валюты")
@@ -282,6 +284,7 @@ def buy(username, currency_code, amount):
     raise ValueError("Портфель не найден")
 
 
+@log_action
 def sell(username, currency_code, amount):
     if not isinstance(currency_code, str) or not currency_code.strip():
         raise ValueError("Неверный код валюты")
