@@ -3,6 +3,11 @@ import hashlib
 import secrets
 from datetime import datetime
 
+from valutatrade_hub.core.exceptions import (
+    CurrencyNotFoundError,
+    InsufficientFundsError,
+)
+
 
 class Wallet:
     def __init__(self, currency_code):
@@ -26,7 +31,7 @@ class Wallet:
             raise ValueError("Неверная сумма")
 
         if amount > self.balance:
-            raise ValueError("Недостаточно денег")
+            raise InsufficientFundsError("Недостаточно денег")
 
         self.balance -= amount
 
@@ -128,13 +133,13 @@ class Portfolio:
         }
 
         if base_currency not in exchange_rates:
-            raise ValueError("Неизвестная валюта")
+            raise CurrencyNotFoundError("Неизвестная валюта")
 
         total_usd = 0.0
 
         for code, wallet in self._wallets.items():
             if code not in exchange_rates:
-                raise ValueError("Неизвестная валюта")
+                raise CurrencyNotFoundError("Неизвестная валюта")
 
             total_usd += wallet.balance * exchange_rates[code]
 

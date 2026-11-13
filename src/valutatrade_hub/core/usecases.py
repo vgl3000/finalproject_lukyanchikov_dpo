@@ -3,6 +3,7 @@ import hashlib
 import math
 from datetime import UTC, datetime
 
+from valutatrade_hub.core.exceptions import CurrencyNotFoundError
 from valutatrade_hub.core.models import User, Wallet
 from valutatrade_hub.decorators import log_action
 from valutatrade_hub.infra.storage import (
@@ -167,7 +168,7 @@ def get_usd_rate(currency_code):
     pair = pairs.get(f"{currency_code}_USD")
 
     if pair is None:
-        raise ValueError(
+        raise CurrencyNotFoundError(
             f"Нет курса для {currency_code}. Выполните update-rates"
         )
 
