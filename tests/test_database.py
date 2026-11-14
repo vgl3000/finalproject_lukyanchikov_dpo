@@ -1,48 +1,60 @@
 
-import json
-from copy import deepcopy
+import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
+
+from valutatrade_hub.infra.database import DatabaseManager
+from valutatrade_hub.infra.storage import load_users, save_users
 
 
-class DatabaseManager:
-    """Единый менеджер JSON-хранилища (Singleton)."""
+class TestDatabaseManager(unittest.TestCase):
+    def test_singleton(self):
+        first = DatabaseManager()
+        second = DatabaseManager()
 
-    _instance = None
+        self.assertIs(first, second)
 
-    def __new__(cls):
-        # __new__ гарантирует один экземпляр менеджера.
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
+    def test_json_read_write(self):
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / "data" / "test.json"
+            database = DatabaseManager()
 
-        return cls._instance
+            self.assertEqual(database.load(path, []), [])
 
-    def load(self, file_path, default=None):
-        """Загрузить данные из JSON-файла."""
-        path = Path(file_path)
+            expected = {
+                "currency": "USD",
+                "balance": 100,
+            }
 
-        if not path.exists():
-            return deepcopy(default)
+            database.save(path, expected)
 
-        with path.open("r", encoding="utf-8-sig") as file:
-            return json.load(file)
+            self.assertEqual(
+                database.load(path, {}),
+                expected,
+            )
 
-    def save(self, file_path, data):
-        """Безопасно сохранить данные через временный файл."""
-        path = Path(file_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
+            self.assertFalse(
+                path.with_name(f"{path.name}.tmp").exists()
+            )
 
-        temp_path = path.with_name(f"{path.name}.tmp")
+    def test_storage_uses_database_manager(self):
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / "users.json"
 
-        try:
-            with temp_path.open("w", encoding="utf-8") as file:
-                json.dump(
-                    data,
-                    file,
-                    ensure_ascii=False,
-                    indent=4,
-                )
+            users = [
+                {"user_id": 1, "username": "demo"}
+            ]
 
-            temp_path.replace(path)
+            with patch(
+                "valutatrade_hub.infra.storage.USERS_FILE",
+                path,
+            ):
+                save_users(users)
+                loaded_users = load_users()
 
-        finally:
-            temp_path.unlink(missing_ok=True)
+            self.assertEqual(loaded_users, users)
+
+
+if __name__ == "__main__":
+    unittest.main()
