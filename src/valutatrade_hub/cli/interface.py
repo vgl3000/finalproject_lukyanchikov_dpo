@@ -6,6 +6,7 @@ from prettytable import PrettyTable
 from valutatrade_hub.core.rates import get_cached_rates
 from valutatrade_hub.core.usecases import (
     buy,
+    deposit_usd,
     get_portfolio_total,
     get_rate,
     get_user_portfolio,
@@ -39,6 +40,12 @@ def run():
     rate_command = commands.add_parser("get-rate")
     rate_command.add_argument("--from", dest="from_currency", required=True)
     rate_command.add_argument("--to", required=True)
+
+    deposit_command = commands.add_parser(
+        "deposit",
+        help="Пополнить виртуальный USD-кошелёк",
+    )
+    deposit_command.add_argument("--amount", type=float, required=True)
 
     buy_command = commands.add_parser("buy")
     buy_command.add_argument("--currency", required=True)
@@ -100,7 +107,19 @@ def run():
 
             print("Курсы из локального кеша:")
             print(f"Курс {from_code} -> {to_code}: {rate:.8f}")
-            print(f"Обратный курс {to_code} -> {from_code}: {reverse_rate:.8f}")
+            print(
+                f"Обратный курс {to_code} -> {from_code}: "
+                f"{reverse_rate:.8f}"
+            )
+
+        elif args.command == "deposit":
+            username = load_session()
+
+            if username is None:
+                raise ValueError("Сначала выполните login")
+
+            result = deposit_usd(username, args.amount)
+            print(result)
 
         elif args.command == "buy":
             username = load_session()
