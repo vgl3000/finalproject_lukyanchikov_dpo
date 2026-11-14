@@ -3,7 +3,7 @@ import hashlib
 import math
 from datetime import UTC, datetime
 
-from valutatrade_hub.core.currencies import get_currency
+from valutatrade_hub.core.currencies import CryptoCurrency, get_currency
 from valutatrade_hub.core.exceptions import CurrencyNotFoundError
 from valutatrade_hub.core.models import User, Wallet
 from valutatrade_hub.decorators import log_action
@@ -179,7 +179,6 @@ def get_usd_rate(currency_code):
 
     age = datetime.now(UTC) - updated_at
 
-    # Срок действия курса берём из настроек Singleton.
     ttl_seconds = SettingsLoader().get("rates_ttl_seconds")
 
     if age.total_seconds() > ttl_seconds:
@@ -197,13 +196,56 @@ def get_usd_rate(currency_code):
 
 
 def get_rate(from_code, to_code):
+    """Получить курс и при необходимости обновить кеш."""
     from_code = get_currency(from_code).code
     to_code = get_currency(to_code).code
 
-    from_rate = get_usd_rate(from_code)
-    to_rate = get_usd_rate(to_code)
+    usd_rates = {}
+    missing_or_expired = []
 
-    return from_rate / to_rate
+    # Проверяем обе валюты, не запрашивая одну валюту дважды.
+    for code in dict.fromkeys((from_code, to_code)):
+        try:
+            usd_rates[code] = get_usd_rate(code)
+
+        except CurrencyNotFoundError as error:
+            if not str(error).startswith("Нет курса для "):
+                raise
+
+            missing_or_expired.append(code)
+
+        except ValueError as error:
+            if "устарел" not in str(error):
+                raise
+
+            missing_or_expired.append(code)
+
+    if missing_or_expired:
+        # Локальный импорт позволяет избежать циклических импортов.
+        from valutatrade_hub.parser_service.updater import RatesUpdater
+
+        sources = []
+
+        for code in missing_or_expired:
+            currency = get_currency(code)
+
+            if isinstance(currency, CryptoCurrency):
+                source = "coingecko"
+            else:
+                source = "exchangerate"
+
+            if source not in sources:
+                sources.append(source)
+
+        # Запрашиваем только необходимые источники курсов.
+        for source in sources:
+            RatesUpdater(source).run_update()
+
+        # После обновления повторно читаем данные из кеша.
+        for code in missing_or_expired:
+            usd_rates[code] = get_usd_rate(code)
+
+    return usd_rates[from_code] / usd_rates[to_code]
 
 
 def get_portfolio_total(username, base_currency="USD"):
