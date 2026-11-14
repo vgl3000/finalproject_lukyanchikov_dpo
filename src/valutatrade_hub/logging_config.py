@@ -3,10 +3,20 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
+from valutatrade_hub.infra.settings import SettingsLoader
+
 
 def setup_logging():
-    logs_folder = Path("logs")
-    logs_folder.mkdir(exist_ok=True)
+    """Настроить журналирование с параметрами из конфигурации."""
+    settings = SettingsLoader()
+
+    logs_folder = Path(settings.get("logs_dir", "logs"))
+    logs_folder.mkdir(parents=True, exist_ok=True)
+
+    log_format = settings.get(
+        "log_format",
+        "%(asctime)s | %(levelname)s | %(message)s",
+    )
 
     log_files = {
         "valutatrade_hub.actions": "actions.log",
@@ -28,9 +38,7 @@ def setup_logging():
         )
 
         handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s | %(levelname)s | %(message)s"
-            )
+            logging.Formatter(log_format)
         )
 
         logger.addHandler(handler)

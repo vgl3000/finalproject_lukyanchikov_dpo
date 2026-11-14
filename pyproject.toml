@@ -1,10 +1,11 @@
+
 [project]
 name = "finalproject-lukyanchikov-dpo"
 version = "0.1.0"
-description = "Add your description here"
+description = "ValutaTrade Hub - платформа для отслеживания курсов валют и симуляции торговли"
 readme = "README.md"
 authors = [
-    { name = "User Namovich", email = "username@yandex.ru" }
+    { name = "Лукьянчиков" }
 ]
 requires-python = ">=3.12"
 dependencies = [
