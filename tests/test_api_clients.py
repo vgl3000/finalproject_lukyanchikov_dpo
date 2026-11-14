@@ -59,23 +59,21 @@ class TestCoinGeckoClient(unittest.TestCase):
         with patch(
             "valutatrade_hub.parser_service.api_clients.requests.get",
             return_value=make_response(data),
+        ), self.assertRaisesRegex(
+            ApiRequestError,
+            "корректных курсов",
         ):
-            with self.assertRaisesRegex(
-                ApiRequestError,
-                "корректных курсов",
-            ):
-                CoinGeckoClient().fetch_rates()
+            CoinGeckoClient().fetch_rates()
 
     def test_coingecko_network_error(self):
         with patch(
             "valutatrade_hub.parser_service.api_clients.requests.get",
             side_effect=requests.Timeout("Timeout"),
+        ), self.assertRaisesRegex(
+            ApiRequestError,
+            "не удалось получить курсы CoinGecko",
         ):
-            with self.assertRaisesRegex(
-                ApiRequestError,
-                "не удалось получить курсы CoinGecko",
-            ):
-                CoinGeckoClient().fetch_rates()
+            CoinGeckoClient().fetch_rates()
 
 
 class TestExchangeRateApiClient(unittest.TestCase):
@@ -152,12 +150,11 @@ class TestExchangeRateApiClient(unittest.TestCase):
         with patch(
             "valutatrade_hub.parser_service.api_clients.requests.get",
             return_value=make_response(data),
+        ), self.assertRaisesRegex(
+            ApiRequestError,
+            "invalid-key",
         ):
-            with self.assertRaisesRegex(
-                ApiRequestError,
-                "invalid-key",
-            ):
-                ExchangeRateApiClient().fetch_rates()
+            ExchangeRateApiClient().fetch_rates()
 
     def test_invalid_rates_are_rejected(self):
         data = {
@@ -172,23 +169,21 @@ class TestExchangeRateApiClient(unittest.TestCase):
         with patch(
             "valutatrade_hub.parser_service.api_clients.requests.get",
             return_value=make_response(data),
+        ), self.assertRaisesRegex(
+            ApiRequestError,
+            "корректных курсов",
         ):
-            with self.assertRaisesRegex(
-                ApiRequestError,
-                "корректных курсов",
-            ):
-                ExchangeRateApiClient().fetch_rates()
+            ExchangeRateApiClient().fetch_rates()
 
     def test_invalid_json_structure(self):
         with patch(
             "valutatrade_hub.parser_service.api_clients.requests.get",
             return_value=make_response([]),
+        ), self.assertRaisesRegex(
+            ApiRequestError,
+            "неверный формат данных",
         ):
-            with self.assertRaisesRegex(
-                ApiRequestError,
-                "неверный формат данных",
-            ):
-                ExchangeRateApiClient().fetch_rates()
+            ExchangeRateApiClient().fetch_rates()
 
 
 if __name__ == "__main__":

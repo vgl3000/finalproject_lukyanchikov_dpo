@@ -161,9 +161,8 @@ class TestRatesRefresh(unittest.TestCase):
         """Неизвестную валюту не пытаемся обновлять."""
         with patch(
             "valutatrade_hub.parser_service.updater.RatesUpdater"
-        ) as updater:
-            with self.assertRaises(CurrencyNotFoundError):
-                get_rate("ZZZ", "USD")
+        ) as updater, self.assertRaises(CurrencyNotFoundError):
+            get_rate("ZZZ", "USD")
 
         updater.assert_not_called()
 

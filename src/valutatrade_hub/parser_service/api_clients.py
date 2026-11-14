@@ -1,4 +1,5 @@
 
+import math
 from abc import ABC, abstractmethod
 
 import requests
@@ -10,17 +11,15 @@ from valutatrade_hub.parser_service.config import ParserConfig
 class BaseApiClient(ABC):
     @abstractmethod
     def fetch_rates(self):
-        pass
+        """Получить курсы валют из API."""
 
 
 class CoinGeckoClient(BaseApiClient):
     def fetch_rates(self):
         config = ParserConfig()
 
-        coin_ids = ",".join(config.CRYPTO_ID_MAP.values())
-
         params = {
-            "ids": coin_ids,
+            "ids": ",".join(config.CRYPTO_ID_MAP.values()),
             "vs_currencies": "usd",
         }
 
@@ -42,20 +41,39 @@ class CoinGeckoClient(BaseApiClient):
 
         except (requests.RequestException, ValueError) as error:
             raise ApiRequestError(
-                "Не удалось получить курсы CoinGecko"
+                "Ошибка при обращении к внешнему API: "
+                "не удалось получить курсы CoinGecko"
             ) from error
+
+        if not isinstance(data, dict):
+            raise ApiRequestError(
+                "Ошибка при обращении к внешнему API: "
+                "CoinGecko вернул неверный формат данных"
+            )
 
         rates = {}
 
         for code, coin_id in config.CRYPTO_ID_MAP.items():
-            if coin_id in data and "usd" in data[coin_id]:
-                rate = data[coin_id]["usd"]
+            coin_data = data.get(coin_id)
 
-                if type(rate) in (int, float) and rate > 0:
-                    rates[f"{code}_USD"] = float(rate)
+            if not isinstance(coin_data, dict):
+                continue
+
+            rate = coin_data.get("usd")
+
+            if type(rate) not in (int, float):
+                continue
+
+            if not math.isfinite(rate) or rate <= 0:
+                continue
+
+            rates[f"{code}_USD"] = float(rate)
 
         if not rates:
-            raise ApiRequestError("CoinGecko не вернул курсы")
+            raise ApiRequestError(
+                "Ошибка при обращении к внешнему API: "
+                "CoinGecko не вернул корректных курсов"
+            )
 
         return rates
 
@@ -85,27 +103,57 @@ class ExchangeRateApiClient(BaseApiClient):
 
         except (requests.RequestException, ValueError) as error:
             raise ApiRequestError(
-                "Не удалось получить курсы ExchangeRate-API"
+                "Ошибка при обращении к внешнему API: "
+                "не удалось получить курсы ExchangeRate-API"
             ) from error
 
+        if not isinstance(data, dict):
+            raise ApiRequestError(
+                "Ошибка при обращении к внешнему API: "
+                "ExchangeRate-API вернул неверный формат данных"
+            )
+
         if data.get("result") != "success":
-            raise ApiRequestError("Ошибка ответа ExchangeRate-API")
+            reason = data.get(
+                "error-type",
+                "неизвестная ошибка",
+            )
+
+            raise ApiRequestError(
+                "Ошибка при обращении к внешнему API: "
+                f"ExchangeRate-API ({reason})"
+            )
 
         conversion_rates = data.get("conversion_rates")
 
         if conversion_rates is None:
-            conversion_rates = data.get("rates", {})
+            conversion_rates = data.get("rates")
+
+        if not isinstance(conversion_rates, dict):
+            raise ApiRequestError(
+                "Ошибка при обращении к внешнему API: "
+                "ExchangeRate-API не вернул таблицу курсов"
+            )
 
         rates = {}
 
         for code in config.FIAT_CODES:
-            if code in conversion_rates:
-                value = conversion_rates[code]
+            value = conversion_rates.get(code)
 
-                if type(value) in (int, float) and value > 0:
-                    rates[f"{code}_USD"] = 1 / value
+            if type(value) not in (int, float):
+                continue
+
+            if not math.isfinite(value) or value <= 0:
+                continue
+
+            # API возвращает стоимость USD в данной валюте.
+            # Нам нужна обратная стоимость валюты в USD.
+            rates[f"{code}_USD"] = 1 / value
 
         if not rates:
-            raise ApiRequestError("ExchangeRate-API не вернул курсы")
+            raise ApiRequestError(
+                "Ошибка при обращении к внешнему API: "
+                "ExchangeRate-API не вернул корректных курсов"
+            )
 
         return rates

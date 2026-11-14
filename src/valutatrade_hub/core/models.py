@@ -31,7 +31,11 @@ class Wallet:
             raise ValueError("Неверная сумма")
 
         if amount > self.balance:
-            raise InsufficientFundsError("Недостаточно денег")
+            raise InsufficientFundsError(
+                "Недостаточно средств: "
+                f"доступно {self.balance:g} {self.currency_code}, "
+                f"требуется {amount:g} {self.currency_code}"
+            )
 
         self.balance -= amount
 
