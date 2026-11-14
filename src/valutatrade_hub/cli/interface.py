@@ -3,6 +3,12 @@ import argparse
 
 from prettytable import PrettyTable
 
+from valutatrade_hub.core.currencies import CURRENCY_REGISTRY
+from valutatrade_hub.core.exceptions import (
+    ApiRequestError,
+    CurrencyNotFoundError,
+    InsufficientFundsError,
+)
 from valutatrade_hub.core.rates import get_cached_rates
 from valutatrade_hub.core.usecases import (
     buy,
@@ -15,11 +21,11 @@ from valutatrade_hub.core.usecases import (
     sell,
 )
 from valutatrade_hub.infra.session import load_session, save_session
-from valutatrade_hub.parser_service.api_clients import ApiRequestError
 from valutatrade_hub.parser_service.updater import RatesUpdater
 
 
 def run():
+    """Запустить командный интерфейс ValutaTrade Hub."""
     parser = argparse.ArgumentParser(
         description="ValutaTrade Hub"
     )
@@ -38,7 +44,11 @@ def run():
     portfolio_command.add_argument("--base", default="USD")
 
     rate_command = commands.add_parser("get-rate")
-    rate_command.add_argument("--from", dest="from_currency", required=True)
+    rate_command.add_argument(
+        "--from",
+        dest="from_currency",
+        required=True,
+    )
     rate_command.add_argument("--to", required=True)
 
     deposit_command = commands.add_parser(
@@ -85,17 +95,28 @@ def run():
                 raise ValueError("Сначала выполните login")
 
             portfolio = get_user_portfolio(username)
-            total = get_portfolio_total(username, args.base)
-            base_currency = args.base.upper()
+            base_currency = args.base.strip().upper()
+            total = get_portfolio_total(username, base_currency)
 
-            print(f"Портфель пользователя '{username}':")
+            print(
+                f"Портфель пользователя '{username}' "
+                f"(база: {base_currency}):"
+            )
 
             if not portfolio["wallets"]:
                 print("Кошельков пока нет")
             else:
                 for code, wallet in portfolio["wallets"].items():
-                    print(f"{code}: {wallet['balance']}")
+                    balance = wallet["balance"]
+                    rate = get_rate(code, base_currency)
+                    value = balance * rate
 
+                    print(
+                        f"{code}: {balance:.6f} "
+                        f"→ {value:.2f} {base_currency}"
+                    )
+
+            print("-" * 40)
             print(f"ИТОГО: {total:.2f} {base_currency}")
 
         elif args.command == "get-rate":
@@ -106,9 +127,9 @@ def run():
             reverse_rate = get_rate(to_code, from_code)
 
             print("Курсы из локального кеша:")
-            print(f"Курс {from_code} -> {to_code}: {rate:.8f}")
+            print(f"Курс {from_code} → {to_code}: {rate:.8f}")
             print(
-                f"Обратный курс {to_code} -> {from_code}: "
+                f"Обратный курс {to_code} → {from_code}: "
                 f"{reverse_rate:.8f}"
             )
 
@@ -173,5 +194,37 @@ def run():
         else:
             parser.print_help()
 
-    except (ValueError, ApiRequestError) as error:
+    except InsufficientFundsError as error:
         print(f"Ошибка: {error}")
+
+    except CurrencyNotFoundError as error:
+        print(f"Ошибка: {error}")
+
+        if str(error).startswith("Неизвестная валюта"):
+            available_codes = ", ".join(sorted(CURRENCY_REGISTRY))
+            print(f"Доступные валюты: {available_codes}")
+            print(
+                "Справка: "
+                "finalproject-lukyanchikov-dpo get-rate --help"
+            )
+        else:
+            print(
+                "Обновите курсы командой: "
+                "finalproject-lukyanchikov-dpo update-rates"
+            )
+
+    except ApiRequestError as error:
+        print(f"Ошибка API: {error}")
+        print(
+            "Проверьте подключение к интернету "
+            "и повторите попытку позже."
+        )
+
+    except ValueError as error:
+        print(f"Ошибка: {error}")
+
+        if "устарел" in str(error):
+            print(
+                "Обновите курсы командой: "
+                "finalproject-lukyanchikov-dpo update-rates"
+            )
