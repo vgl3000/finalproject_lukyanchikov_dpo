@@ -26,3 +26,14 @@ dev = [
 
 [tool.uv.build-backend]
 module-name = "valutatrade_hub"
+
+[tool.valutatrade]
+rates_ttl_seconds = 300
+default_base_currency = "USD"
+data_dir = "data"
+users_file = "data/users.json"
+portfolios_file = "data/portfolios.json"
+rates_file = "data/rates.json"
+history_file = "data/exchange_rates.json"
+logs_dir = "logs"
+log_format = "%(asctime)s | %(levelname)s | %(message)s"
