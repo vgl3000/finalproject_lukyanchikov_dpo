@@ -339,3 +339,40 @@ def sell(username, currency_code, amount):
             return f"Продано {amount} {currency_code} за {income:.2f} USD"
 
     raise ValueError("Портфель не найден")
+
+
+
+def deposit_usd(username, amount):
+    """Пополнить виртуальный USD-кошелёк пользователя."""
+    if type(amount) not in (int, float):
+        raise ValueError("Сумма должна быть числом")
+
+    if not math.isfinite(amount) or amount <= 0:
+        raise ValueError("Сумма должна быть положительным числом")
+
+    user_id = get_user_portfolio(username)["user_id"]
+    portfolios = load_portfolios()
+
+    for portfolio in portfolios:
+        if portfolio["user_id"] == user_id:
+            wallets = portfolio["wallets"]
+            wallet = Wallet("USD")
+
+            if "USD" in wallets:
+                wallet.balance = wallets["USD"]["balance"]
+
+            wallet.deposit(amount)
+
+            wallets["USD"] = {
+                "currency_code": "USD",
+                "balance": wallet.balance,
+            }
+
+            save_portfolios(portfolios)
+
+            return (
+                f"Пополнено {amount:.2f} виртуальных USD. "
+                f"Баланс: {wallet.balance:.2f} USD"
+            )
+
+    raise ValueError("Портфель не найден")
