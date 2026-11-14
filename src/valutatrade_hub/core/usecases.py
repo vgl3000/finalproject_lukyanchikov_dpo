@@ -7,6 +7,7 @@ from valutatrade_hub.core.currencies import get_currency
 from valutatrade_hub.core.exceptions import CurrencyNotFoundError
 from valutatrade_hub.core.models import User, Wallet
 from valutatrade_hub.decorators import log_action
+from valutatrade_hub.infra.settings import SettingsLoader
 from valutatrade_hub.infra.storage import (
     load_portfolios,
     load_rates,
@@ -178,7 +179,10 @@ def get_usd_rate(currency_code):
 
     age = datetime.now(UTC) - updated_at
 
-    if age.total_seconds() > 300:
+    # Срок действия курса берём из настроек Singleton.
+    ttl_seconds = SettingsLoader().get("rates_ttl_seconds")
+
+    if age.total_seconds() > ttl_seconds:
         raise ValueError(
             f"Курс {currency_code} устарел. Выполните update-rates"
         )
