@@ -122,9 +122,8 @@ class TestUsecases(unittest.TestCase):
         with patch(
             "valutatrade_hub.core.usecases.load_rates",
             return_value=rates,
-        ):
-            with self.assertRaisesRegex(ValueError, "устарел"):
-                get_usd_rate("EUR")
+        ), self.assertRaisesRegex(ValueError, "устарел"):
+            get_usd_rate("EUR")
 
     def test_deposit_usd(self):
         portfolios = [
