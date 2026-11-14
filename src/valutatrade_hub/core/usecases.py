@@ -3,6 +3,7 @@ import hashlib
 import math
 from datetime import UTC, datetime
 
+from valutatrade_hub.core.currencies import get_currency
 from valutatrade_hub.core.exceptions import CurrencyNotFoundError
 from valutatrade_hub.core.models import User, Wallet
 from valutatrade_hub.decorators import log_action
@@ -34,7 +35,7 @@ def register(username, password):
 
     new_portfolio = {
         "user_id": new_id,
-        "wallets": {}
+        "wallets": {},
     }
 
     portfolios.append(new_portfolio)
@@ -83,10 +84,7 @@ def get_user_portfolio(username):
 
 
 def add_currency(user_id, currency_code):
-    if not isinstance(currency_code, str) or not currency_code.strip():
-        raise ValueError("Неверный код валюты")
-
-    currency_code = currency_code.strip().upper()
+    currency_code = get_currency(currency_code).code
     portfolios = load_portfolios()
 
     for portfolio in portfolios:
@@ -108,10 +106,7 @@ def add_currency(user_id, currency_code):
 
 
 def deposit_wallet(user_id, currency_code, amount):
-    if not isinstance(currency_code, str) or not currency_code.strip():
-        raise ValueError("Неверный код валюты")
-
-    currency_code = currency_code.strip().upper()
+    currency_code = get_currency(currency_code).code
     portfolios = load_portfolios()
 
     for portfolio in portfolios:
@@ -134,10 +129,7 @@ def deposit_wallet(user_id, currency_code, amount):
 
 
 def withdraw_wallet(user_id, currency_code, amount):
-    if not isinstance(currency_code, str) or not currency_code.strip():
-        raise ValueError("Неверный код валюты")
-
-    currency_code = currency_code.strip().upper()
+    currency_code = get_currency(currency_code).code
     portfolios = load_portfolios()
 
     for portfolio in portfolios:
@@ -160,6 +152,8 @@ def withdraw_wallet(user_id, currency_code, amount):
 
 
 def get_usd_rate(currency_code):
+    currency_code = get_currency(currency_code).code
+
     if currency_code == "USD":
         return 1.0
 
@@ -199,14 +193,8 @@ def get_usd_rate(currency_code):
 
 
 def get_rate(from_code, to_code):
-    if not isinstance(from_code, str) or not from_code.strip():
-        raise ValueError("Неверный код валюты")
-
-    if not isinstance(to_code, str) or not to_code.strip():
-        raise ValueError("Неверный код валюты")
-
-    from_code = from_code.strip().upper()
-    to_code = to_code.strip().upper()
+    from_code = get_currency(from_code).code
+    to_code = get_currency(to_code).code
 
     from_rate = get_usd_rate(from_code)
     to_rate = get_usd_rate(to_code)
@@ -215,9 +203,9 @@ def get_rate(from_code, to_code):
 
 
 def get_portfolio_total(username, base_currency="USD"):
+    base_currency = get_currency(base_currency).code
     portfolio = get_user_portfolio(username)
 
-    base_currency = base_currency.strip().upper()
     total_usd = 0.0
 
     for code, wallet in portfolio["wallets"].items():
@@ -231,10 +219,7 @@ def get_portfolio_total(username, base_currency="USD"):
 
 @log_action
 def buy(username, currency_code, amount):
-    if not isinstance(currency_code, str) or not currency_code.strip():
-        raise ValueError("Неверный код валюты")
-
-    currency_code = currency_code.strip().upper()
+    currency_code = get_currency(currency_code).code
 
     if currency_code == "USD":
         raise ValueError("Нельзя купить USD за USD")
@@ -287,10 +272,7 @@ def buy(username, currency_code, amount):
 
 @log_action
 def sell(username, currency_code, amount):
-    if not isinstance(currency_code, str) or not currency_code.strip():
-        raise ValueError("Неверный код валюты")
-
-    currency_code = currency_code.strip().upper()
+    currency_code = get_currency(currency_code).code
 
     if currency_code == "USD":
         raise ValueError("Нельзя продать USD за USD")
@@ -339,7 +321,6 @@ def sell(username, currency_code, amount):
             return f"Продано {amount} {currency_code} за {income:.2f} USD"
 
     raise ValueError("Портфель не найден")
-
 
 
 def deposit_usd(username, amount):
