@@ -86,10 +86,7 @@ class ExchangeRateApiClient(BaseApiClient):
         headers = {}
 
         if config.exchangerate_key:
-            url = config.EXCHANGERATE_URL
-            headers["Authorization"] = (
-                f"Bearer {config.exchangerate_key}"
-            )
+            url = f"{config.EXCHANGERATE_URL}/{config.exchangerate_key}/latest/USD"
 
         try:
             response = requests.get(
