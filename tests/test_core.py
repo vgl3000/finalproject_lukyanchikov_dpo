@@ -52,6 +52,13 @@ class TestUser(unittest.TestCase):
         self.assertFalse(user.verify_password("wrong"))
         self.assertNotEqual(user.to_dict()["hashed_password"], "1234")
 
+    def test_user_properties(self):
+        user = User(5, "student", "1234")
+
+        self.assertEqual(user.user_id, 5)
+        self.assertEqual(user.username, "student")
+        self.assertEqual(user.registration_date, user._registration_date)
+
     def test_change_password(self):
         user = User(1, "demo", "1234")
         user.change_password("5678")
@@ -150,6 +157,16 @@ class TestUsecases(unittest.TestCase):
             1000,
         )
         save_mock.assert_called_once()
+
+    def test_buy_rejects_invalid_amount(self):
+        with patch(
+            "valutatrade_hub.core.usecases.get_rate"
+        ) as get_rate_mock:
+            for amount in (-1, float("nan"), float("inf")):
+                with self.assertRaises(ValueError):
+                    buy("demo", "EUR", amount)
+
+        get_rate_mock.assert_not_called()
 
     def test_buy_and_sell(self):
         portfolios = [
