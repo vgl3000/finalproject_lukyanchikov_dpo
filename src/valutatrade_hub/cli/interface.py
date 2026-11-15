@@ -1,4 +1,3 @@
-
 import argparse
 
 from prettytable import PrettyTable
@@ -21,6 +20,7 @@ from valutatrade_hub.core.usecases import (
     sell,
 )
 from valutatrade_hub.infra.session import load_session, save_session
+from valutatrade_hub.infra.storage import load_rates
 from valutatrade_hub.parser_service.updater import RatesUpdater
 
 
@@ -126,12 +126,36 @@ def run():
             rate = get_rate(from_code, to_code)
             reverse_rate = get_rate(to_code, from_code)
 
+            # Читаем время обновления из кеша.
+            data = load_rates()
+            pairs = data.get("pairs", {})
+            dates = []
+
+            for code in (from_code, to_code):
+                if code == "USD":
+                    continue
+
+                pair = pairs.get(f"{code}_USD")
+
+                if pair is not None:
+                    date = pair.get("updated_at")
+
+                    if date:
+                        dates.append(date)
+
+            # Для двух валют используем время более старого курса.
+            if dates:
+                updated_at = min(dates)
+            else:
+                updated_at = "не требуется для USD"
+
             print("Курсы из локального кеша:")
             print(f"Курс {from_code} → {to_code}: {rate:.8f}")
             print(
                 f"Обратный курс {to_code} → {from_code}: "
                 f"{reverse_rate:.8f}"
             )
+            print(f"Обновлено: {updated_at}")
 
         elif args.command == "deposit":
             username = load_session()
