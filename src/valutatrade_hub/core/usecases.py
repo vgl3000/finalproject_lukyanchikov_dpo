@@ -199,6 +199,9 @@ def get_rate(from_code, to_code):
     from_code = get_currency(from_code).code
     to_code = get_currency(to_code).code
 
+    if from_code == to_code:
+        return 1.0
+
     usd_rates = {}
     missing_or_expired = []
 
