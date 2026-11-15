@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 from valutatrade_hub.core.currencies import CryptoCurrency, get_currency
 from valutatrade_hub.core.exceptions import CurrencyNotFoundError
-from valutatrade_hub.core.models import User, Wallet
+from valutatrade_hub.core.models import User, Wallet, validate_amount
 from valutatrade_hub.decorators import log_action
 from valutatrade_hub.infra.settings import SettingsLoader
 from valutatrade_hub.infra.storage import (
@@ -274,11 +274,7 @@ def buy(username, currency_code, amount):
     if currency_code == "USD":
         raise ValueError("Нельзя купить USD за USD")
 
-    if type(amount) not in (int, float) or not math.isfinite(amount):
-        raise ValueError("Неверная сумма")
-
-    if amount <= 0:
-        raise ValueError("Неверная сумма")
+    validate_amount(amount)
 
     rate = get_rate(currency_code, "USD")
     cost = amount * rate
@@ -327,11 +323,7 @@ def sell(username, currency_code, amount):
     if currency_code == "USD":
         raise ValueError("Нельзя продать USD за USD")
 
-    if type(amount) not in (int, float) or not math.isfinite(amount):
-        raise ValueError("Неверная сумма")
-
-    if amount <= 0:
-        raise ValueError("Неверная сумма")
+    validate_amount(amount)
 
     rate = get_rate(currency_code, "USD")
     income = amount * rate
