@@ -5,7 +5,7 @@ import os
 class ParserConfig:
     COINGECKO_URL = "https://api.coingecko.com/api/v3/simple/price"
 
-    EXCHANGERATE_URL = "https://v6.exchangerate-api.com/v6/latest/USD"
+    EXCHANGERATE_URL = "https://v6.exchangerate-api.com/v6"
     EXCHANGERATE_FREE_URL = "https://open.er-api.com/v6/latest/USD"
 
     TIMEOUT = 10
