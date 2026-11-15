@@ -5,10 +5,11 @@ from valutatrade_hub.infra.database import DatabaseManager
 from valutatrade_hub.infra.settings import SettingsLoader
 
 settings = SettingsLoader()
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-USERS_FILE = Path(settings.get("users_file"))
-PORTFOLIOS_FILE = Path(settings.get("portfolios_file"))
-RATES_FILE = Path(settings.get("rates_file"))
+USERS_FILE = PROJECT_ROOT / settings.get("users_file")
+PORTFOLIOS_FILE = PROJECT_ROOT / settings.get("portfolios_file")
+RATES_FILE = PROJECT_ROOT / settings.get("rates_file")
 
 
 def load_users():
