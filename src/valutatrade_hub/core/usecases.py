@@ -1,4 +1,3 @@
-
 import hashlib
 import math
 from datetime import UTC, datetime
@@ -203,7 +202,6 @@ def get_rate(from_code, to_code):
     usd_rates = {}
     missing_or_expired = []
 
-    # Проверяем обе валюты, не запрашивая одну валюту дважды.
     for code in dict.fromkeys((from_code, to_code)):
         try:
             usd_rates[code] = get_usd_rate(code)
@@ -221,7 +219,6 @@ def get_rate(from_code, to_code):
             missing_or_expired.append(code)
 
     if missing_or_expired:
-        # Локальный импорт позволяет избежать циклических импортов.
         from valutatrade_hub.parser_service.updater import RatesUpdater
 
         sources = []
@@ -237,11 +234,9 @@ def get_rate(from_code, to_code):
             if source not in sources:
                 sources.append(source)
 
-        # Запрашиваем только необходимые источники курсов.
         for source in sources:
             RatesUpdater(source).run_update()
 
-        # После обновления повторно читаем данные из кеша.
         for code in missing_or_expired:
             usd_rates[code] = get_usd_rate(code)
 
@@ -249,18 +244,24 @@ def get_rate(from_code, to_code):
 
 
 def get_portfolio_total(username, base_currency="USD"):
+    """Посчитать стоимость портфеля по актуальным курсам."""
     base_currency = get_currency(base_currency).code
     portfolio = get_user_portfolio(username)
 
-    total_usd = 0.0
+    total = 0.0
 
     for code, wallet in portfolio["wallets"].items():
-        rate = get_usd_rate(code)
-        total_usd += wallet["balance"] * rate
+        balance = wallet["balance"]
 
-    base_rate = get_usd_rate(base_currency)
+        # Пустой кошелёк не влияет на общую стоимость.
+        if balance == 0:
+            continue
 
-    return total_usd / base_rate
+        # get_rate сам обновит устаревший курс.
+        rate = get_rate(code, base_currency)
+        total += balance * rate
+
+    return total
 
 
 @log_action
