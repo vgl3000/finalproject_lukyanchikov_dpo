@@ -2,7 +2,12 @@
 import json
 from pathlib import Path
 
-HISTORY_FILE = Path("data/exchange_rates.json")
+from valutatrade_hub.infra.settings import SettingsLoader
+
+HISTORY_FILE = (
+    Path(__file__).resolve().parents[3]
+    / SettingsLoader().get("history_file")
+)
 
 
 def load_history():
