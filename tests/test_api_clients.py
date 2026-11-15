@@ -109,7 +109,7 @@ class TestExchangeRateApiClient(unittest.TestCase):
             timeout=ParserConfig.TIMEOUT,
         )
 
-    def test_api_key_uses_bearer(self):
+    def test_api_key_in_url(self):
         data = {
             "result": "success",
             "conversion_rates": {
@@ -134,10 +134,8 @@ class TestExchangeRateApiClient(unittest.TestCase):
         self.assertAlmostEqual(rates["EUR_USD"], 1.25)
 
         request.assert_called_once_with(
-            ParserConfig.EXCHANGERATE_URL,
-            headers={
-                "Authorization": "Bearer demo-test-key",
-            },
+            f"{ParserConfig.EXCHANGERATE_URL}/demo-test-key/latest/USD",
+            headers={},
             timeout=ParserConfig.TIMEOUT,
         )
 
