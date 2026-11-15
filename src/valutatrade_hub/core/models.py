@@ -76,6 +76,18 @@ class User:
             (password + self._salt).encode("utf-8")
         ).hexdigest()
 
+    @property
+    def user_id(self):
+        return self._user_id
+
+    @property
+    def username(self):
+        return self._username
+
+    @property
+    def registration_date(self):
+        return self._registration_date
+
     def get_user_info(self):
         return {
             "user_id": self._user_id,
