@@ -10,7 +10,8 @@ def setup_logging():
     """Настроить журналирование с параметрами из конфигурации."""
     settings = SettingsLoader()
 
-    logs_folder = Path(settings.get("logs_dir", "logs"))
+    project_root = Path(__file__).resolve().parents[2]
+    logs_folder = project_root / settings.get("logs_dir", "logs")
     logs_folder.mkdir(parents=True, exist_ok=True)
 
     log_format = settings.get(
