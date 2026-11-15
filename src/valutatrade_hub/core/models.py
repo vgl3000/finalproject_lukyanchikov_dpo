@@ -1,5 +1,6 @@
 
 import hashlib
+import math
 import secrets
 from datetime import datetime
 
@@ -18,7 +19,7 @@ class Wallet:
         if type(amount) not in (int, float):
             raise ValueError("Сумма должна быть числом")
 
-        if amount <= 0:
+        if not math.isfinite(amount) or amount <= 0:
             raise ValueError("Неверная сумма")
 
         self.balance += amount
@@ -27,7 +28,7 @@ class Wallet:
         if type(amount) not in (int, float):
             raise ValueError("Сумма должна быть числом")
 
-        if amount <= 0:
+        if not math.isfinite(amount) or amount <= 0:
             raise ValueError("Неверная сумма")
 
         if amount > self.balance:
@@ -50,6 +51,9 @@ class Wallet:
     def balance(self, value):
         if type(value) not in (int, float):
             raise ValueError("Баланс должен быть числом")
+
+        if not math.isfinite(value):
+            raise ValueError("Баланс должен быть конечным числом")
 
         if value < 0:
             raise ValueError("Баланс не может быть отрицательным")
