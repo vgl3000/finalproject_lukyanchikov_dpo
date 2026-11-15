@@ -2,10 +2,11 @@
 import json
 from pathlib import Path
 
-SESSION_FILE = Path("data/session.json")
+SESSION_FILE = Path(__file__).resolve().parents[3] / "data/session.json"
 
 
 def save_session(username):
+    SESSION_FILE.parent.mkdir(parents=True, exist_ok=True)
     session = {"username": username}
 
     with open(SESSION_FILE, "w", encoding="utf-8") as file:
