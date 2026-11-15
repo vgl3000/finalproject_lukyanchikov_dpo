@@ -24,6 +24,16 @@ def make_rate(value, expired=False):
 
 
 class TestRatesRefresh(unittest.TestCase):
+    def test_same_currency_needs_no_api(self):
+        """Курс валюты к самой себе всегда равен единице."""
+        with patch(
+            "valutatrade_hub.parser_service.updater.RatesUpdater"
+        ) as updater:
+            result = get_rate("BTC", "BTC")
+
+        self.assertEqual(result, 1.0)
+        updater.assert_not_called()
+
     def test_fresh_rate_does_not_call_api(self):
         """Свежий курс не требует обновления."""
         data = {
