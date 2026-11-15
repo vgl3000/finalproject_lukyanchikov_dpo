@@ -7,26 +7,27 @@ from valutatrade_hub.core.currencies import get_currency
 from valutatrade_hub.core.exceptions import InsufficientFundsError
 
 
+def validate_amount(amount):
+    """Проверить, что сумма положительная и конечная."""
+    if type(amount) not in (int, float):
+        raise ValueError("Сумма должна быть числом")
+
+    if not math.isfinite(amount) or amount <= 0:
+        raise ValueError("Неверная сумма")
+
+
 class Wallet:
     def __init__(self, currency_code):
         self.currency_code = currency_code
         self.balance = 0.0
 
     def deposit(self, amount):
-        if type(amount) not in (int, float):
-            raise ValueError("Сумма должна быть числом")
-
-        if not math.isfinite(amount) or amount <= 0:
-            raise ValueError("Неверная сумма")
+        validate_amount(amount)
 
         self.balance += amount
 
     def withdraw(self, amount):
-        if type(amount) not in (int, float):
-            raise ValueError("Сумма должна быть числом")
-
-        if not math.isfinite(amount) or amount <= 0:
-            raise ValueError("Неверная сумма")
+        validate_amount(amount)
 
         if amount > self.balance:
             raise InsufficientFundsError(
