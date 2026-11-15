@@ -57,7 +57,7 @@ class TestUser(unittest.TestCase):
 
         self.assertEqual(user.user_id, 5)
         self.assertEqual(user.username, "student")
-        self.assertEqual(user.registration_date, user._registration_date)
+        self.assertIsInstance(user.registration_date, datetime)
 
     def test_change_password(self):
         user = User(1, "demo", "1234")
