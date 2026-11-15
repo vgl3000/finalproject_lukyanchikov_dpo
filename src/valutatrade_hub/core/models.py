@@ -1,13 +1,10 @@
-
 import hashlib
 import math
 import secrets
 from datetime import datetime
 
-from valutatrade_hub.core.exceptions import (
-    CurrencyNotFoundError,
-    InsufficientFundsError,
-)
+from valutatrade_hub.core.currencies import get_currency
+from valutatrade_hub.core.exceptions import InsufficientFundsError
 
 
 class Wallet:
@@ -117,6 +114,8 @@ class Portfolio:
         self._wallets = {}
 
     def add_currency(self, currency_code):
+        currency_code = get_currency(currency_code).code
+
         if currency_code in self._wallets:
             raise ValueError("Такой кошелёк уже есть")
 
@@ -134,21 +133,17 @@ class Portfolio:
         return self._wallets.copy()
 
     def get_total_value(self, base_currency="USD"):
-        exchange_rates = {
-            "USD": 1.0,
-            "EUR": 1.1,
-            "BTC": 60000.0,
-        }
+        """Посчитать стоимость всех кошельков."""
+        from valutatrade_hub.core.usecases import get_rate
 
-        if base_currency not in exchange_rates:
-            raise CurrencyNotFoundError("Неизвестная валюта")
-
-        total_usd = 0.0
+        base_currency = get_currency(base_currency).code
+        total = 0.0
 
         for code, wallet in self._wallets.items():
-            if code not in exchange_rates:
-                raise CurrencyNotFoundError("Неизвестная валюта")
+            if wallet.balance == 0:
+                continue
 
-            total_usd += wallet.balance * exchange_rates[code]
+            rate = get_rate(code, base_currency)
+            total += wallet.balance * rate
 
-        return total_usd / exchange_rates[base_currency]
+        return total
